@@ -1,0 +1,21 @@
+{
+  "name": "sweet-crunch",
+  "version": "0.1.0",
+  "description": "Sweet Crunch - A dessert themed match-3 puzzle game",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2",
+    "vite": "^8.0.5"
+  }
+}

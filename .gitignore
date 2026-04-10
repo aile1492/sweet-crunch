@@ -3,3 +3,37 @@ dist/
 .vite/
 *.log
 .DS_Store
+
+# ── Claude Code 설정 (로컬 전용) ─────────────────────────
+.claude/
+
+# ── 임시 작업 파일 ────────────────────────────────────────
+.tmp_*/
+.wiki-compiler.json
+playtest_artifacts/
+pptx_work/
+
+# ── 원본 에셋 소스 (용량 큰 외부 에셋 폴더) ──────────────
+kenney_*/
+Godot-particle-and-vfx-textures-main/
+
+# ── Android 서명/배포 민감 파일 ──────────────────────────
+# 업로드 키/keystore는 절대 저장소에 커밋하지 마라
+*.jks
+*.keystore
+keystore.properties
+
+# Android 로컬 환경 설정 (SDK 경로 등 — 개발자마다 다름)
+android/local.properties
+
+# Android 빌드 산출물 (Gradle 캐시, 컴파일 결과)
+android/.gradle/
+android/app/build/
+android/build/
+
+# Capacitor가 cap sync로 자동 생성하는 웹 에셋 (재생성 가능)
+android/app/src/main/assets/public/
+
+# 서명된 릴리즈 APK / AAB (배포 산출물은 저장소 밖에서 관리)
+*.apk
+*.aab

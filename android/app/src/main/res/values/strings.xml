@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sweet Crunch</string>
+    <string name="title_activity_main">Sweet Crunch</string>
+    <string name="package_name">com.sweetcrunch.puzzle</string>
+    <string name="custom_url_scheme">com.sweetcrunch.puzzle</string>
+</resources>

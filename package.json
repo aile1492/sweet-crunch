@@ -6,15 +6,27 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build:web": "tsc && cross-env VITE_BUILD_TARGET=web vite build",
+    "preview": "vite preview",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:android": "npm run build && npx cap sync android && npx cap open android",
+    "cap:run:android": "npm run build && npx cap sync android && npx cap run android"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@capacitor-community/admob": "^8.0.0",
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "phaser": "^3.90.0"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
+    "sharp": "^0.34.5",
     "typescript": "^6.0.2",
     "vite": "^8.0.5"
   }

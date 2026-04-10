@@ -16,12 +16,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    signingConfigs {
-        release {
-            storeFile file('../sweetcrunch-release.jks')
-            storePassword '***REMOVED***'
-            keyAlias 'sweetcrunch'
-            keyPassword '***REMOVED***'
+    // keystore.properties 파일에서 서명 정보 로드 (git 제외 파일)
+    // 파일이 없으면 릴리즈 서명 없이 빌드 (CI/로컬 디버그용)
+    def keystorePropsFile = rootProject.file('keystore.properties')
+    if (keystorePropsFile.exists()) {
+        def keystoreProps = new Properties()
+        keystoreProps.load(new FileInputStream(keystorePropsFile))
+        signingConfigs {
+            release {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
         }
     }
     buildTypes {

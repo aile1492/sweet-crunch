@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 const isWebBuild = process.env.VITE_BUILD_TARGET === 'web';
 
 export default defineConfig({
-  base: isWebBuild ? '/word-bloom/' : './',
+  base: isWebBuild ? '/sweet-crunch/' : './',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

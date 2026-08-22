@@ -1,102 +1,97 @@
-# Sweet Crunch - Dessert Match-3 Puzzle Game
+# Sweet Crunch
 
-A dessert-themed match-3 puzzle game with a data-driven 500-level system, 5 special gems, 3 obstacle types, and an artisanal patisserie design system. Built with Phaser 3 + TypeScript, deployed to Web and Android.
+AI와 협업해 만든 디저트 테마의 같은 그림 맞추기 퍼즐 게임입니다. Phaser 3와 TypeScript로 웹과 Android 빌드를 지원하며, 많은 레벨을 일관된 규칙으로 구성할 수 있는 데이터 구조를 만들었습니다.
 
-## Game Features
+## 게임 특징
 
-- **8x8 Grid, 6 Tile Types** — Cupcake, Donut, Macaron, Croissant, Icecream, Chocolate
-- **5 Special Gems** — Line Blast (4-match), Color Bomb (5-match), Bomb, Cross Blast, Wrapped (L/T-shape)
-- **3 Obstacle Types** — Ice (multi-layer), Chain (swap lock), Stone (cell block)
-- **500 Data-Driven Levels** — Band → Pod → Template → Factory pipeline with selective overrides
-- **Cascade Combo System** — Match → gravity → refill → re-match async loop with score multipliers
-- **Move-Limited Gameplay** — Strategic puzzle solving, not reflex-based
+- **8×8 게임판과 6종의 블록**: 컵케이크, 도넛, 마카롱, 크루아상, 아이스크림, 초콜릿
+- **5종의 특수 블록**: 가로·세로 제거, 같은 색 제거, 폭탄과 교차 제거
+- **3종의 장애물**: 여러 번 제거해야 하는 얼음, 이동을 막는 체인, 칸을 막는 돌
+- **500개 레벨 데이터**: 난이도 구간, 세부 그룹, 생성 규칙과 개별 조정을 분리
+- **연쇄 처리**: 제거, 낙하, 새 블록 생성, 재검사를 순서대로 수행
+- **이동 횟수 제한**: 빠른 반응보다 목표와 이동 순서를 생각하는 퍼즐 구성
 
-## Architecture
+## 구현 구조
 
-```
-src/ (21 scripts, 11,268 lines)
-├── main.ts                  # Entry point
-├── config.ts                # Game constants, grid settings, color tokens
+```text
+src/
+├── main.ts                  # 시작 지점
+├── config.ts                # 게임 규칙과 색상 설정
 ├── scenes/
-│   ├── BootScene.ts         # Asset loading & preload
-│   ├── TitleScene.ts        # Main menu
-│   ├── LevelSelectScene.ts  # Level selection UI
-│   ├── GameScene.ts         # Core gameplay (6,304 lines)
-│   └── SettingsScene.ts     # User preferences
+│   ├── BootScene.ts         # 리소스 불러오기
+│   ├── TitleScene.ts        # 시작 화면
+│   ├── LevelSelectScene.ts  # 레벨 선택
+│   ├── GameScene.ts         # 게임 진행
+│   └── SettingsScene.ts     # 사용자 설정
 ├── data/
-│   ├── levels.ts            # Level registry
-│   ├── levelBands.ts        # Difficulty bands
-│   ├── levelPods.ts         # Sub-groups within bands
-│   ├── levelTemplates.ts    # Generation rules
-│   ├── levelFactories.ts    # Programmatic level production
-│   ├── levelOverrides.ts    # Selective adjustments
-│   ├── tutorials.ts         # Tutorial sequences
-│   ├── progress.ts          # Save/load progress
-│   └── activeRun.ts         # Current session state
-├── utils/
-│   ├── SoundManager.ts      # Audio (BGM + SFX)
-│   ├── AdMobManager.ts      # Monetization (Banner + Rewarded)
-│   ├── UserSettings.ts      # Persistent user preferences
-│   └── SceneTransition.ts   # Scene transition effects
-└── shaders/
-    └── RainbowPipeline.ts   # WebGL shader effects
+│   ├── levelBands.ts        # 난이도 구간
+│   ├── levelPods.ts         # 구간 안의 세부 그룹
+│   ├── levelTemplates.ts    # 레벨 생성 규칙
+│   ├── levelFactories.ts    # 레벨 데이터 생성
+│   └── levelOverrides.ts    # 특정 레벨 개별 조정
+├── utils/                   # 사운드, 광고, 설정, 화면 전환
+└── shaders/                 # WebGL 화면 효과
 ```
 
-## Level System
+## 레벨 데이터 구성
 
-500 levels are generated through a multi-layer data architecture:
+500개 레벨을 모두 손으로 작성하지 않고 여러 단계의 규칙을 조합해 생성합니다.
 
-| Layer | File | Role |
-|-------|------|------|
-| Band | `levelBands.ts` | Difficulty ranges (e.g., Easy, Normal, Hard) |
-| Pod | `levelPods.ts` | Sub-groups within each band |
-| Template | `levelTemplates.ts` | Generation rules (goals, obstacles, moves) |
-| Factory | `levelFactories.ts` | Programmatic level production |
-| Override | `levelOverrides.ts` | Hand-tuned adjustments for specific levels |
+| 단계 | 파일 | 역할 |
+|---|---|---|
+| 난이도 구간 | `levelBands.ts` | 쉬움, 보통, 어려움과 같은 큰 범위 |
+| 세부 그룹 | `levelPods.ts` | 각 구간 안의 목표와 장애물 조합 |
+| 생성 규칙 | `levelTemplates.ts` | 목표, 장애물, 이동 횟수 규칙 |
+| 데이터 생성 | `levelFactories.ts` | 규칙을 실제 레벨 데이터로 변환 |
+| 개별 조정 | `levelOverrides.ts` | 특별히 조정할 레벨만 수정 |
 
-## Design System: "The Artisanal Patisserie"
+## 디자인 방향
 
-An editorial approach to cozy gaming — boutique bakery aesthetics instead of chaotic match-3 neon.
+강한 네온 색상 대신 작은 디저트 가게의 메뉴판을 떠올릴 수 있는 부드러운 화면을 목표로 했습니다.
 
-- **Material-style Color Tokens** — 20+ named tokens (Surface, Primary, Secondary, Tertiary)
-- **"No-Line" Rule** — No 1px borders; tonal shifts and soft gradients only
-- **Glassmorphism Overlays** — 80% opacity + backdrop blur for immersive UI layers
-- **Plus Jakarta Sans Typography** — 5-level type hierarchy (Display → Label)
+- 역할에 따라 나눈 20개 이상의 색상 값
+- 선 대신 색상 차이와 그라데이션으로 영역 구분
+- 반투명 화면과 흐림 효과
+- Plus Jakarta Sans를 활용한 글자 크기 체계
 
-## Tech Stack
+## AI와 협업한 방식
 
-| Category | Technology |
-|----------|------------|
-| Game Engine | Phaser 3 (v3.90+) |
-| Language | TypeScript (strict mode) |
-| Build Tool | Vite |
-| Mobile | Capacitor (Android) |
-| Monetization | AdMob (Banner + Rewarded) |
-| Shader | WebGL Custom Pipeline |
-| Deployment | GitHub Pages (Web) · Google Play (Android) |
-| AI Partner | Claude Code (Vibe Coding) |
+- 게임 규칙과 화면 구성을 문서로 정리했습니다.
+- 기능을 작은 작업으로 나누고 구현 초안과 검토를 반복했습니다.
+- 많은 레벨을 수작업으로 작성하지 않도록 데이터 생성 규칙을 설계했습니다.
+- Google Stitch로 만든 화면 시안을 Phaser 3 화면으로 옮기는 규칙을 정리했습니다.
 
-## Getting Started
+## 사용 기술
+
+| 구분 | 기술 |
+|---|---|
+| 게임 프레임워크 | Phaser 3 |
+| 언어 | TypeScript |
+| 빌드 도구 | Vite |
+| Android 빌드 | Capacitor |
+| 광고 | AdMob |
+| 화면 효과 | WebGL Custom Pipeline |
+| 배포 | GitHub Pages, Android 빌드 |
+| AI 협업 | Claude Code |
+
+## 실행 방법
 
 ```bash
-# Install dependencies
+# 패키지 설치
 npm install
 
-# Development server (localhost:3000)
+# 개발 서버 실행
 npm run dev
 
-# Production build
+# 배포용 빌드
 npm run build
 
-# Android build
+# Android 프로젝트 열기
 npm run cap:android
 ```
 
-## Links
+## 링크
 
-- [Web Demo](https://aile1492.github.io/sweet-crunch/)
-- [Portfolio (Notion)](https://www.notion.so/34213eca65878176b367f96fc2f7ef0d)
-
-## Contact
-
-KIM MIN GWAN | mingwan1492@gmail.com
+- [웹에서 실행](https://aile1492.github.io/sweet-crunch/)
+- [Notion 상세 페이지](https://app.notion.com/p/34213eca65878176b367f96fc2f7ef0d)
+- [전체 포트폴리오](https://app.notion.com/p/33413eca6587815c98e5da909b315272)

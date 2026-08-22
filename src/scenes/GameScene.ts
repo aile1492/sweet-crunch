@@ -33,7 +33,12 @@ import { showBanner, removeBanner, showRewardedAd } from '../utils/AdMobManager'
 import { saveRun, loadRun, clearRun, RunSnapshot } from '../data/activeRun';
 import { createInitialBoard } from '../game-core/board';
 import { createRuntimeSeed, SeededRandom } from '../game-core/random';
-import type { GameQASnapshot } from '../game-core/qa-contract';
+import type {
+  GameQAActionRejectReason,
+  GameQAActionResult,
+  GameQASnapshot,
+} from '../game-core/qa-contract';
+import type { SwapAction } from '../game-core/domain';
 
 const TILE_SYMBOLS: Record<TileType, string> = {
   cupcake: '🧁',
@@ -258,6 +263,67 @@ export class GameScene extends Phaser.Scene {
       },
       random: this.gameplayRandom.snapshot(),
     };
+  }
+
+  /** QA Test Bridge가 한 번의 Swap을 실제 화면 실행 경로로 수행할 때 사용합니다. */
+  async performQAAction(action: SwapAction): Promise<GameQAActionResult> {
+    const before = this.getQASnapshot();
+    const rejection = this.getQAActionRejection(action);
+    if (rejection) return { accepted: false, reason: rejection, before, after: before };
+
+    this.trySwap(action.from.row, action.from.col, action.to.row, action.to.col);
+    await this.waitForQAActionToSettle();
+    const after = this.getQASnapshot();
+    const accepted = after.movesLeft < before.movesLeft;
+    return {
+      accepted,
+      ...(accepted ? {} : { reason: 'no_match' as const }),
+      before,
+      after,
+    };
+  }
+
+  private getQAActionRejection(action: SwapAction): GameQAActionRejectReason | null {
+    if (this.isAnimating) return 'busy';
+    if (this.gameOver) return 'game_over';
+    const positions = [action.from, action.to];
+    if (positions.some(position => (
+      !Number.isInteger(position.row)
+      || !Number.isInteger(position.col)
+      || position.row < 0
+      || position.row >= GRID_ROWS
+      || position.col < 0
+      || position.col >= GRID_COLS
+    ))) return 'out_of_bounds';
+    if (!this.isAdjacent(action.from.row, action.from.col, action.to.row, action.to.col)) {
+      return 'not_adjacent';
+    }
+    if (!this.grid[action.from.row]?.[action.from.col] || !this.grid[action.to.row]?.[action.to.col]) {
+      return 'empty_cell';
+    }
+    if (
+      this.cellModifiers[action.from.row]?.[action.from.col]?.type === 'chain'
+      || this.cellModifiers[action.to.row]?.[action.to.col]?.type === 'chain'
+    ) return 'blocked_cell';
+    return null;
+  }
+
+  private waitForQAActionToSettle(timeoutMs = 15_000): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const startedAt = performance.now();
+      const check = () => {
+        if (!this.isAnimating) {
+          resolve();
+          return;
+        }
+        if (performance.now() - startedAt > timeoutMs) {
+          reject(new Error(`QA Action이 ${timeoutMs}ms 안에 끝나지 않았습니다.`));
+          return;
+        }
+        this.time.delayedCall(16, check);
+      };
+      check();
+    });
   }
 
   create(): void {

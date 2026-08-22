@@ -1,4 +1,4 @@
-import { CellModifier } from '../config';
+import type { CellModifier } from '../game-core/domain';
 
 // ─── 공유 타입 ────────────────────────────────────────
 export interface CellDef {

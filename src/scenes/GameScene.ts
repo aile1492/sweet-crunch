@@ -31,6 +31,9 @@ import { RainbowPipeline, ShockwavePipeline, ShimmerPipeline } from '../shaders/
 import { getMotionFactor, isReducedMotionEnabled, vibrateCelebrate, vibrateSpecial, vibrateTap } from '../utils/UserSettings';
 import { showBanner, removeBanner, showRewardedAd } from '../utils/AdMobManager';
 import { saveRun, loadRun, clearRun, RunSnapshot } from '../data/activeRun';
+import { createInitialBoard } from '../game-core/board';
+import { createRuntimeSeed, SeededRandom } from '../game-core/random';
+import type { GameQASnapshot } from '../game-core/qa-contract';
 
 const TILE_SYMBOLS: Record<TileType, string> = {
   cupcake: '🧁',
@@ -74,6 +77,8 @@ interface MatchGroup {
 export class GameScene extends Phaser.Scene {
   // P-8: 레벨 데이터
   private currentLevel!: LevelDef;
+  private gameplaySeed = 1;
+  private gameplayRandom = new SeededRandom(this.gameplaySeed);
   /** 현재 레벨에서 사용하는 타일 종류 (tileCount에 따라 TILE_TYPES를 slice) */
   private get activeTileTypes(): TileType[] {
     const count = this.currentLevel?.tileCount ?? TILE_TYPES.length;
@@ -154,8 +159,10 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
-  init(data: { level?: number; resumeRun?: boolean }): void {
+  init(data: { level?: number; resumeRun?: boolean; qaSeed?: number } = {}): void {
     this.currentLevel = getLevelDef(data.level ?? 1);
+    this.gameplaySeed = data.qaSeed ?? createRuntimeSeed();
+    this.gameplayRandom = new SeededRandom(this.gameplaySeed);
 
     // 상태 리셋
     this.grid = [];
@@ -210,6 +217,10 @@ export class GameScene extends Phaser.Scene {
     if (data.resumeRun) {
       const snap = loadRun();
       if (snap && snap.level === this.currentLevel.level) {
+        if (snap.gameplayRandom) {
+          this.gameplaySeed = snap.gameplayRandom.seed;
+          this.gameplayRandom = SeededRandom.fromSnapshot(snap.gameplayRandom);
+        }
         this.pendingSnap = snap;
         this.movesLeft = snap.movesLeft;
         this.score = snap.score;
@@ -222,6 +233,31 @@ export class GameScene extends Phaser.Scene {
         this.tutorial = null;
       }
     }
+  }
+
+  /** QA 도구가 화면 객체 없이 읽을 수 있는 게임 결과 상태 */
+  getQASnapshot(): GameQASnapshot {
+    return {
+      schemaVersion: '1.0',
+      level: this.currentLevel.level,
+      seed: this.gameplaySeed,
+      movesLeft: this.movesLeft,
+      score: this.score,
+      status: this.gameOver ? (this.areAllGoalsMet() ? 'won' : 'lost') : 'playing',
+      grid: this.grid.map(row => [...row]),
+      specialGrid: this.specialGrid.map(row => [...row]),
+      modifiers: this.cellModifiers.map(row => row.map(modifier => (
+        modifier ? { ...modifier } as CellModifier : null
+      ))),
+      timedGems: this.timedGemCounters.map(row => [...row]),
+      goals: this.currentLevel.goals.map(goal => ({ ...goal })),
+      goalProgress: {
+        collected: this.goalCollected,
+        iceCleared: this.iceCleared,
+        stoneCleared: this.stoneCleared,
+      },
+      random: this.gameplayRandom.snapshot(),
+    };
   }
 
   create(): void {
@@ -582,7 +618,7 @@ export class GameScene extends Phaser.Scene {
     }
     const boardDef = this.currentLevel.board;
     for (let row = 0; row < GRID_ROWS; row++) {
-      this.grid[row] = [];
+      this.grid[row] = Array(GRID_COLS).fill(null);
       this.specialGrid[row] = [];
       this.tileObjects[row] = [];
       this.cellModifiers[row] = [];
@@ -598,23 +634,16 @@ export class GameScene extends Phaser.Scene {
         this.cellModifiers[row][col] = cellDef?.modifier ? { ...cellDef.modifier } as CellModifier : null;
         this.modifierVisuals[row][col] = null;
 
-        // 돌 셀은 타일 없음
-        if (cellDef?.modifier?.type === 'stone') {
-          this.grid[row][col] = null;
-          this.specialGrid[row][col] = null;
-          this.tileObjects[row][col] = null;
-          continue;
-        }
-
-        let tileType: TileType;
-        do {
-          tileType = this.activeTileTypes[Phaser.Math.Between(0, this.activeTileTypes.length - 1)];
-        } while (this.wouldCauseMatch(row, col, tileType));
-        this.grid[row][col] = tileType;
         this.specialGrid[row][col] = null;
         this.tileObjects[row][col] = null;
       }
     }
+
+    const initialBoard = createInitialBoard(this.gameplayRandom, {
+      tileTypes: this.activeTileTypes,
+      modifiers: this.cellModifiers,
+    });
+    this.grid = initialBoard.grid;
 
     // 타이머 젬 배치
     if (this.currentLevel.timedGems) {
@@ -3450,7 +3479,7 @@ export class GameScene extends Phaser.Scene {
     switch (special) {
       case 'lineBlast': {
         const tile = this.tileObjects[row][col];
-        const dir = tile?.lineDirection ?? (Math.random() > 0.5 ? 'horizontal' : 'vertical');
+        const dir = tile?.lineDirection ?? (this.gameplayRandom.boolean() ? 'horizontal' : 'vertical');
         if (dir === 'horizontal') {
           for (let c = 0; c < GRID_COLS; c++) cells.push({ row, col: c });
         } else {
@@ -3585,7 +3614,7 @@ export class GameScene extends Phaser.Scene {
               if (this.grid[r][c] === targetType) {
                 this.specialGrid[r][c] = 'lineBlast';
                 const tile = this.tileObjects[r][c];
-                if (tile) tile.lineDirection = Math.random() > 0.5 ? 'horizontal' : 'vertical';
+                if (tile) tile.lineDirection = this.gameplayRandom.boolean() ? 'horizontal' : 'vertical';
                 cells.push({ row: r, col: c });
               }
             }
@@ -3786,6 +3815,7 @@ export class GameScene extends Phaser.Scene {
       iceCleared: this.iceCleared,
       stoneCleared: this.stoneCleared,
       secondChanceUsed: this.secondChanceUsed,
+      gameplayRandom: this.gameplayRandom.snapshot(),
       savedAt: Date.now(),
     };
   }
@@ -4243,7 +4273,7 @@ export class GameScene extends Phaser.Scene {
       for (let row = emptyRow; row >= 0; row--) {
         // 돌 셀은 건너뛰기
         if (this.isStoneCell(row, col)) continue;
-        const newType = this.activeTileTypes[Phaser.Math.Between(0, this.activeTileTypes.length - 1)];
+        const newType = this.gameplayRandom.pick(this.activeTileTypes);
         this.grid[row][col] = newType;
         this.specialGrid[row][col] = null;
 
@@ -4601,7 +4631,7 @@ export class GameScene extends Phaser.Scene {
 
     let attempts = 0;
     do {
-      Phaser.Utils.Array.Shuffle(types);
+      this.gameplayRandom.shuffleInPlace(types);
       for (let i = 0; i < normalPositions.length; i++) {
         const { row, col } = normalPositions[i];
         this.grid[row][col] = types[i];
@@ -4764,7 +4794,7 @@ export class GameScene extends Phaser.Scene {
         }
       }
       if (live.length === 0) return null;
-      return live[Math.floor(Math.random() * live.length)];
+      return this.gameplayRandom.pick(live);
     };
 
     let remaining = visualMoves;
@@ -4799,7 +4829,9 @@ export class GameScene extends Phaser.Scene {
       if (oldTile) oldTile.container.destroy();
       const pos = this.getTilePosition(row, col);
       const type = this.grid[row][col]!;
-      const lineDir = specialType === 'lineBlast' ? (Math.random() > 0.5 ? 'horizontal' as const : 'vertical' as const) : undefined;
+      const lineDir = specialType === 'lineBlast'
+        ? (this.gameplayRandom.boolean() ? 'horizontal' as const : 'vertical' as const)
+        : undefined;
       this.tileObjects[row][col] = this.createTile(pos.x, pos.y, row, col, type, specialType, lineDir);
       const tile = this.tileObjects[row][col]!;
       tile.container.setScale(0);

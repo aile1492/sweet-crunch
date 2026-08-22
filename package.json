@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "tsc && vite build",
     "build:web": "tsc && cross-env VITE_BUILD_TARGET=web vite build",
     "preview": "vite preview",
@@ -28,6 +30,7 @@
     "cross-env": "^10.1.0",
     "sharp": "^0.34.5",
     "typescript": "^6.0.2",
-    "vite": "^8.0.5"
+    "vite": "^8.0.5",
+    "vitest": "^4.0.0"
   }
 }

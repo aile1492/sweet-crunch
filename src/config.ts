@@ -1,12 +1,22 @@
 import Phaser from 'phaser';
+import {
+  GRID_COLS,
+  GRID_ROWS,
+  TILE_TYPES,
+  type CellModifier,
+  type CellModifierType,
+  type SpecialType,
+  type TileType,
+} from './game-core/domain';
+
+export { GRID_COLS, GRID_ROWS, TILE_TYPES } from './game-core/domain';
+export type { CellModifier, CellModifierType, SpecialType, TileType } from './game-core/domain';
 
 // 기준 해상도 (SCREEN_SPEC.md 기반)
 export const GAME_WIDTH = 1080;
 export const GAME_HEIGHT = 1920;
 
 // 그리드 설정
-export const GRID_ROWS = 8;
-export const GRID_COLS = 8;
 export const TILE_DISPLAY_SIZE = 108; // 타일 표시 크기 (원형 배경 포함)
 export const TILE_GAP = 12;
 export const TILE_TOTAL = TILE_DISPLAY_SIZE + TILE_GAP; // 120
@@ -21,18 +31,6 @@ export const BOARD_Y = GAME_HEIGHT / 2 - 40; // 약간 위로
 // 보드 좌상단 첫 타일 중심 좌표
 export const BOARD_OFFSET_X = BOARD_X - BOARD_WIDTH / 2 + BOARD_PADDING + TILE_DISPLAY_SIZE / 2;
 export const BOARD_OFFSET_Y = BOARD_Y - BOARD_HEIGHT / 2 + BOARD_PADDING + TILE_DISPLAY_SIZE / 2;
-
-// 타일 종류
-export const TILE_TYPES = [
-  'cupcake',
-  'donut',
-  'macaron',
-  'croissant',
-  'icecream',
-  'chocolate',
-] as const;
-
-export type TileType = (typeof TILE_TYPES)[number];
 
 // Stitch 디자인 기반 컬러 시스템
 export const COLORS = {
@@ -76,8 +74,6 @@ export const TILE_ICON_COLORS: Record<TileType, number> = {
 export const TILE_BG_COLOR = COLORS.surfaceContainerLowest;
 
 // ─── P-7: 특수 젬 ──────────────────────────────────
-export type SpecialType = 'lineBlast' | 'bomb' | 'colorBomb' | 'crossBlast' | 'wrapped';
-
 export const SPECIAL_SYMBOLS: Record<SpecialType, string> = {
   lineBlast: '🔥',
   bomb: '💣',
@@ -85,16 +81,6 @@ export const SPECIAL_SYMBOLS: Record<SpecialType, string> = {
   crossBlast: '🌀',
   wrapped: '🎁',
 };
-
-// ─── 장애물 시스템 ──────────────────────────────────
-/** 셀 장애물 타입 */
-export type CellModifier =
-  | { type: 'ice'; layers: 1 | 2 | 3 }     // 얼음: 매칭 시 1겹씩 제거
-  | { type: 'chain' }                        // 잠금: 스왑 불가, 인접 매칭으로 해제
-  | { type: 'stone'; layers: 1 | 2 }         // 돌: 빈 셀 차단, 인접 매칭으로 파괴
-  ;
-
-export type CellModifierType = 'ice' | 'chain' | 'stone';
 
 // ─── P-6: 게임 밸런스 상수 ──────────────────────────
 // 점수 계산

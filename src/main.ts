@@ -8,6 +8,7 @@ import { GameScene } from './scenes/GameScene';
 import { SettingsScene } from './scenes/SettingsScene';
 import { initAdMob } from './utils/AdMobManager';
 import { SoundManager } from './utils/SoundManager';
+import { installTestBridge } from './qa/testBridge';
 
 // ─── Capacitor 네이티브 플러그인 초기화 ───
 async function initNativePlugins(): Promise<void> {
@@ -39,6 +40,11 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const game = new Phaser.Game(config);
 (window as unknown as Record<string, unknown>).__game = game;
+
+const query = new URLSearchParams(window.location.search);
+if (import.meta.env.DEV || query.get('qa') === '1') {
+  installTestBridge(game);
+}
 
 // 네이티브 플러그인은 게임 시작 후 초기화
 initNativePlugins();

@@ -308,7 +308,7 @@ export class GameScene extends Phaser.Scene {
     return null;
   }
 
-  private waitForQAActionToSettle(timeoutMs = 15_000): Promise<void> {
+  private waitForQAActionToSettle(timeoutMs = 30_000): Promise<void> {
     return new Promise((resolve, reject) => {
       const startedAt = performance.now();
       const check = () => {

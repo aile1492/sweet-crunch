@@ -1,4 +1,4 @@
-import { TileType, TILE_TYPES } from '../config';
+import { type TileType, TILE_TYPES } from '../game-core/domain';
 import {
   CellDef, BoardLayout,
   iceBoard, stoneBoard, chainBoard, mixedBoard,

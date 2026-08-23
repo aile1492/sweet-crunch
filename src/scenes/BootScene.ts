@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../config';
+import { LEVELS } from '../data/levels';
 
 const LOADING_TIPS = [
   'Mixing the batter...',
@@ -140,7 +141,20 @@ export class BootScene extends Phaser.Scene {
     this.createParticleTextures();
     this.createBeamTextures();
     this.createFxAnimations();
-    this.scene.start('TitleScene');
+    const query = new URLSearchParams(window.location.search);
+    const qaLevel = Number(query.get('qaLevel'));
+    const qaSeed = Number(query.get('qaSeed'));
+    if (
+      query.get('qa') === '1'
+      && Number.isInteger(qaLevel)
+      && qaLevel >= 1
+      && qaLevel <= LEVELS.length
+      && Number.isFinite(qaSeed)
+    ) {
+      this.scene.start('GameScene', { level: qaLevel, qaSeed });
+    } else {
+      this.scene.start('TitleScene');
+    }
   }
 
   /** 빔 전용 고품질 텍스처 생성 (LineBlast / CrossBlast) */

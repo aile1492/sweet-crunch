@@ -6,7 +6,8 @@
 // 복구 진입 : LevelSelectScene이 snapshots을 감지 → 사용자에게 이어하기 물음
 // 악용 방지 : 슬롯 1개, 가장 최근 안정 상태만 덮어씀 (세이브 어뷰징 불가)
 
-import type { TileType, SpecialType, CellModifier } from '../config';
+import type { TileType, SpecialType, CellModifier } from '../game-core/domain';
+import type { RandomSnapshot } from '../game-core/random';
 
 export interface RunSnapshot {
   readonly version: 1;
@@ -43,6 +44,8 @@ export interface RunSnapshot {
   stoneCleared: number;
   /** 2차 기회 사용 여부 */
   secondChanceUsed: boolean;
+  /** 결정적 이어하기와 QA Replay를 위한 게임 난수 상태 */
+  gameplayRandom?: RandomSnapshot;
   /** 저장 시각 (Unix ms) */
   savedAt: number;
 }

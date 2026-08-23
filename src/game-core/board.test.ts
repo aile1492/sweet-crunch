@@ -29,7 +29,6 @@ describe('초기 보드 생성', () => {
     expect(listLegalSwaps(result.grid, modifiers).length).toBeGreaterThan(0);
   });
 });
-
 describe('보드 검사', () => {
   it('가로와 세로 매치를 중복 없이 찾는다', () => {
     const grid: TileGrid = Array.from({ length: 8 }, () => Array(8).fill(null));

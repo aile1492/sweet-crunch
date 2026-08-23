@@ -14,7 +14,6 @@ export interface InitialBoardOptions {
   modifiers?: ModifierGrid;
   maxAttempts?: number;
 }
-
 export interface InitialBoardResult {
   grid: TileGrid;
   attempts: number;

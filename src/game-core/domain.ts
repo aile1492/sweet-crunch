@@ -34,4 +34,3 @@ export interface SwapAction {
 
 export type TileGrid = (TileType | null)[][];
 export type ModifierGrid = (CellModifier | null)[][];
-

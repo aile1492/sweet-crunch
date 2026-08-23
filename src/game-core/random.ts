@@ -3,7 +3,6 @@ export interface RandomSnapshot {
   state: number;
   calls: number;
 }
-
 /**
  * 빠르고 재현 가능한 Mulberry32 기반 난수 생성기입니다.
  * 보안 목적이 아니라 게임 상태 재현과 QA Trace를 위해 사용합니다.

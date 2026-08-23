@@ -29,4 +29,3 @@ describe('SeededRandom', () => {
     expect(first.shuffleInPlace(left)).toEqual(second.shuffleInPlace(right));
   });
 });
-
